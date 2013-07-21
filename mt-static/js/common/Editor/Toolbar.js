@@ -53,13 +53,14 @@ Editor.Toolbar = new Class( Component, {
                     break;
                     
                 case "insertLink":
+                case "autolink":
                     var link = this.editor.getSelectedLink();
                     if( link ) 
                         this.editLink( link );
                     else 
                         this.createLink();
                     break;
-                
+
                 default:
                     this.extendedCommand( command, event );
             }

@@ -110,13 +110,68 @@ Editor.Textarea = new Class( Component, {
             
             case "createLink":
                 /* XXX escape() argument? */
+
+	        /* modified by DQNEO */
+	        /* get document.title by Ajax */
+	        if (!text) {
+		    var url = '/mt/title.php?url=' + argument;
+		    var res = jQuery.ajax(url,{
+			async: false,
+			cache: false,
+			success : function(data) {
+			    alert(data);
+			},
+			complete : function(data) {
+			    alert(data);
+			},
+			error : function(x,t,e) {
+			    alert(x);
+			    alert(t);
+			    alert(e);
+			},
+		    }).done(
+			    function ( data ) {
+				if( console && console.log ) {
+				    console.log("Sample of data:", data.slice(0, 100));
+				}
+			    });
+		    alert(res);
+		    text = 'empty';
+		}
                 this.setSelection( '<a href="' + argument + '">' + text + "</a>" );
                 break;
             
             case "indent":
                 this.setSelection( "<blockquote>" + text + "</blockquote>" );
                 break;
+
+            case "precode":
+                this.setSelection("<pre><code>" +  toHtmlEntity(text) + "</code></pre>");
+                break;
             
+
+	    case "htmlentity":
+                this.setSelection(toHtmlEntity(text));
+                break;
+
+	    case "h4":
+                this.setSelection("<h4>" + text + "</h4>");
+                break;
+	    case "h5":
+                this.setSelection("<h5>" + text + "</h5>");
+                break;
+
+            case "br":
+                this.setSelection((function(s){
+                    if (s === '') {
+			console.log('br for empty');
+			return '<br />';
+		    }
+                    return s.replace(/\n/g, "<br />\n");
+                })(text));
+                break;
+
+
             case "insertUnorderedList":
             case "insertOrderedList":
                 var list = text.split( /\r?\n/ );
@@ -213,3 +268,10 @@ Editor.Textarea = new Class( Component, {
     getSelectedLink: Function.stub
 
 } );
+
+function toHtmlEntity(s) {
+    return s.replace(/([<>&\"])/g, function(m0,m1) {
+	return {'<': '&lt;', '>': '&gt;', '\"': '&quot;', '&': '&amp;'}[m1];
+    });
+
+};
