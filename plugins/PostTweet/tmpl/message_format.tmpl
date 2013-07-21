@@ -1,0 +1,6 @@
+<mt:setvar name="title_len" value="140" />
+<mt:setvarblock name="title"><mt:entrytitle remove_html="1" /></mt:setvarblock>
+<mt:setvarblock name="link"> - <mt:entryshortenedpermalink /></mt:setvarblock>
+<mt:setvarblock name="link_len"><mt:var name="link" count_characters="1" /></mt:setvarblock>
+<mt:setvar name="title_len" op="-" value="$link_len" />
+<mt:var name="title" trim_to="$title_len" /><mt:var name="link" />

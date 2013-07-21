@@ -1,0 +1,52 @@
+<mt:include name="dialog/header.tmpl" page_title="<__trans phrase="OAuth authentication">">
+
+<mt:if name="error_authorization">
+
+    <p><__trans phrase="Failed to get response from [_1], ([_2])" params="twitter%%get_authorization_url"/></p>
+
+    <div class="actions-bar">
+        <div class="actions-bar-inner pkg actions">
+            <button
+                type="submit"
+                accesskey="x"
+                class="action cancel mt-close-dialog"
+                title="<__trans phrase="Close (x)">"
+                ><__trans phrase="Close"></button>
+        </div>
+    </div>
+
+<mt:else>
+
+<form method="post" action="<mt:var name="script_url">">
+    <input type="hidden" name="__mode" value="get_access_token_posttweet" />
+    <input type="hidden" name="magic_token" value="<mt:var name="magic_token">" />
+    <input type="hidden" name="blog_id" value="<mt:var name="blog_id">" />
+    <p>
+    <__trans phrase="Authorize this plugin and enter the PIN#." />
+    <a href="<mt:var name="access_url">" target="_blank"><__trans phrase="Get PIN#" /></a>
+    </p>
+    <input type="text" name="posttweet_pin" id="posttweet_pin" value="<mt:var name="posttweet_pin" escape="html">" />
+    <input type="hidden" name="access_url" value="<$mt:var name="access_url" escape="html"$>" />
+    <input type="hidden" name="request_token" value="<$mt:var name="request_token" escape="html"$>" />
+    <input type="hidden" name="request_token_secret" value="<$mt:var name="request_token_secret" escape="html"$>" />
+
+    <div class="actions-bar">
+        <div class="actions-bar-inner pkg actions">
+            <button
+                type="submit"
+                title="<__trans phrase="Done">"
+                class="action primary-button close"
+                ><__trans phrase="Done"></button>
+            <button
+                type="submit"
+                accesskey="x"
+                class="action cancel mt-close-dialog"
+                title="<__trans phrase="Close (x)">"
+                ><__trans phrase="Close"></button>
+        </div>
+    </div>
+</form>
+
+</mt:if>
+
+<mt:include name="dialog/footer.tmpl">

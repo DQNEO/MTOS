@@ -1,0 +1,112 @@
+<script type="text/javascript">
+function posttweet_show_elem(id) {
+  var e = getByID(id);
+  if(!e) return false;
+  if(DOM.hasClassName(e, 'hidden')) {
+    DOM.removeClassName(e, 'hidden');
+  }
+  return false;
+}
+
+function posttweet_hide_elem(id) {
+  var e = getByID(id);
+  if(!e) return false;
+  if(DOM.hasClassName(e, 'hidden')) {
+    return false;
+  }
+  else {
+    DOM.addClassName(e, 'hidden');
+  }
+  if(window.app) app.reflow();
+}
+
+function posttweet_update_userinfo(e) {
+  if(!e) return false;
+  var info = getByID('posttweet_bitly_userinfo');
+  if(!info) return false;
+  if(e.value == 'tinyurl') {
+    posttweet_hide_elem('posttweet_bitly_userinfo');
+  }
+  else {
+    posttweet_show_elem('posttweet_bitly_userinfo');
+  }
+  return false;
+}
+
+function posttweet_update_warning(e, name) {
+  if(!e || !name) return false;
+  var field = getByID('posttweet_bitly_'+name);
+  if(!field) return false;
+  if(field.value.length > 0) {
+    posttweet_hide_elem('warning_bitly_'+name);
+  }
+  else {
+    posttweet_show_elem('warning_bitly_'+name);
+  }
+  return false;
+}
+</script>
+
+<mtapp:setting
+    id="posttweet_plugin_enable"
+    label="<__trans phrase="Enable:">">
+    <p><input type="checkbox" value="1" name="posttweet_plugin_enable" id="posttweet_plugin_enable"<mt:if name="posttweet_plugin_enable"> checked="checked"</mt:if> class="cb"/> <label for="posttweet_plugin_enable"><__trans phrase="Enable this plugin in this blog/site."></label></p>
+</mtapp:setting>
+
+<mtapp:setting
+   id="posttweet_oauth"
+   label="<__trans phrase="Authentication:">">
+<mt:if name="posttweet_req_modules">
+<p class="alert-warning-inline icon-left icon-warning" id="posttweet-warning"><__trans phrase="Your server does not have the required modules installed : "><mt:var name="posttweet_req_modules"></p>
+<mt:else>
+<p><a href="<mt:var name="script_url">?__mode=oauth_posttweet&amp;blog_id=<mt:var name="blog_id">" class="mt-open-dialog"><__trans phrase="OAuth authentication"></a></p>
+</mt:if>
+</mtapp:setting>
+
+<mtapp:setting
+   id="posttweet_only_firstrelease"
+   label="<__trans phrase="Post when:">">
+  <ul>
+    <li><input type="checkbox" name="posttweet_only_firstrelease" id="posttweet_only_firstrelease" value="1" <mt:if name="posttweet_only_firstrelease"> checked="checked"</mt:if> /><__trans phrase="Entry/Page status changed from Unpublished to Published."></li>
+  </ul>
+</mtapp:setting>
+   
+<mtapp:setting
+   id="posttweet_ignore_newpost"
+   label="<__trans phrase="Experimental Options:">">
+  <ul>
+    <li><input type="checkbox" name="posttweet_ignore_newpost" id="posttweet_ignore_newpost" value="1" <mt:if name="posttweet_ignore_newpost"> checked="checked"</mt:if> /><__trans phrase="Ignore XML-RPC newPost method."></li>
+  </ul>
+</mtapp:setting>
+
+<mtapp:setting
+   id="posttweet_url_shortener"
+   label="<__trans phrase="URL Shortener:">">
+  <select name="posttweet_url_shortener" id="posttweet_url_shortener" onchange="posttweet_update_userinfo(this); return false;">
+    <option value="tinyurl"<mt:if name="posttweet_url_shortener" eq="tinyurl"> selected="selected"</mt:if>><__trans phrase="TinyURL" /></option>
+    <option value="bitly"<mt:if name="posttweet_url_shortener" eq="bitly"> selected="selected"</mt:if>><__trans phrase="bit.ly" /></option>
+    <option value="jmp"<mt:if name="posttweet_url_shortener" eq="jmp"> selected="selected"</mt:if>><__trans phrase="j.mp (bit.ly)" /></option>
+  </select>
+</mtapp:setting>
+
+<div id="posttweet_bitly_userinfo"<mt:if name="posttweet_url_shortener" eq="tinyurl"> class="hidden"</mt:if>>
+  <mtapp:setting
+     id="posttweet_bitly_usrname"
+     label="<__trans phrase="bit.ly API Login:">">
+    <input type="text" id="posttweet_bitly_username" name="posttweet_bitly_username" value="<mt:var name="posttweet_bitly_username">" onchange="posttweet_update_warning(this, 'username'); return false;" onkeyup="posttweet_update_warning(this, 'username');"/>
+    <span id="warning_bitly_username" class="alert-warning-inline icon-left icon-warning<mt:if name="posttweet_bitly_username"> hidden</mt:if>"><__trans phrase="Specify your bit.ly API Login name." /></span>
+  </mtapp:setting>
+  
+  <mtapp:setting
+     id="posttweet_bitly_apikey"
+     label="<__trans phrase="bit.ly API Key:">">
+    <input type="text" id="posttweet_bitly_apikey" name="posttweet_bitly_apikey" value="<mt:var name="posttweet_bitly_apikey">" onchange="posttweet_update_warning(this, 'apikey'); return false;" onkeyup="posttweet_update_warning(this, 'apikey');" />
+    <span id="warning_bitly_apikey" class="alert-warning-inline icon-left icon-warning<mt:if name="posttweet_bitly_apikey"> hidden</mt:if>"><__trans phrase="Specify your bit.ly API Key." /></span>
+  </mtapp:setting>
+</div>
+
+<mtapp:setting
+   id="posttweet_format_template"
+   label="<__trans phrase="Format Template:">">
+  <input type="text" name="posttweet_format_template" id="posttweet_format_template" value="<mt:var name="posttweet_format_template" escape="html">" size="60" />
+</mtapp:setting>
