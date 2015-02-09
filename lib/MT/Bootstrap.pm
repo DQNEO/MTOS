@@ -67,19 +67,6 @@ sub import {
 
     if ($class) {
 
-        # When running under FastCGI, the initial invocation of the
-        # script has a bare environment. We can use this to test
-        # for FastCGI.
-        my $not_fast_cgi = 0;
-        $not_fast_cgi ||= exists $ENV{$_}
-            for qw(HTTP_HOST GATEWAY_INTERFACE SCRIPT_FILENAME SCRIPT_URL);
-        my $fast_cgi
-            = defined $param{FastCGI} ? $param{FastCGI} : ( !$not_fast_cgi );
-        if ($fast_cgi) {
-            eval 'require CGI::Fast;';
-            $fast_cgi = 0 if $@;
-        }
-
         # ready to run now... run inside an eval block so we can gracefully
         # die if something bad happens
         my $app;
@@ -92,105 +79,11 @@ sub import {
                 . __FILE__
                 . "\nrequire $class; 1;"
                 or die $@;
-            if ($fast_cgi) {
-                $ENV{FAST_CGI} = 1;
 
-                # Signal handling needs FAIL_ACCEPT_ON_INTR set:
-                # "If set, Accept will fail if interrupted. It not set, it
-                # will just keep on waiting."
-                require FCGI;
-                $CGI::Fast::Ext_Request
-                    = FCGI::Request( \*STDIN, \*STDOUT, \*STDERR, \%ENV, 0,
-                    FCGI::FAIL_ACCEPT_ON_INTR() );
-                my ( $max_requests, $max_time, $cfg );
+            $app = $class->new(%param) or die $class->errstr;
+            local $SIG{__WARN__} = sub { $app->trace( $_[0] ) };
+            $app->run;
 
-        # catch SIGHUP, SIGUSR1 and SIGTERM and allow request to finish before
-        # exiting.
-        # TODO: handle SIGPIPE more gracefully.
-                $SIG{HUP}  = \&fcgi_sig_handler;
-                $SIG{USR1} = \&fcgi_sig_handler;
-                $SIG{TERM} = \&fcgi_sig_handler;
-                $SIG{PIPE} = 'IGNORE';
-
-           # we set the "handling request" flag so the signal handler can exit
-           # immediately when requests aren't being handled.
-                while ( $fcgi_handling_request = ( my $cgi = new CGI::Fast ) )
-                {
-                    $app = $class->new( %param, CGIObject => $cgi )
-                        or die $class->errstr;
-
-                    $ENV{FAST_CGI} = 1;
-                    $app->{fcgi_startup_time} ||= time;
-                    $app->{fcgi_request_count}
-                        = ( $app->{fcgi_request_count} || 0 ) + 1;
-
-                    unless ($cfg) {
-                        $cfg          = $app->config;
-                        $max_requests = $cfg->FastCGIMaxRequests;
-                        $max_time     = $cfg->FastCGIMaxTime;
-                    }
-
-                    local $SIG{__WARN__} = sub { $app->trace( $_[0] ) };
-                    MT->set_instance($app);
-                    $app->config->read_config_db();
-                    $app->init_request( CGIObject => $cgi );
-                    $app->run;
-
-                    $fcgi_handling_request = 0;
-
-                    # Check for caught signal
-                    if ($fcgi_exit_requested) {
-                        print STDERR
-                            "Movable Type: FastCGI request loop exiting. Caught signal SIG$fcgi_exit_requested.\n";
-                        last;
-                    }
-
-                    # Check for timeout for this process
-                    elsif ( $max_time
-                        && ( time - $app->{fcgi_startup_time} >= $max_time ) )
-                    {
-                        last;
-                    }
-
-                    # Check for max executions for this process
-                    elsif ( $max_requests
-                        && ( $app->{fcgi_request_count} >= $max_requests ) )
-                    {
-                        last;
-                    }
-                    else {
-                        require MT::Touch;
-                        require MT::Util;
-                        if ( my $touched
-                            = MT::Touch->latest_touch( 0, 'config' ) )
-                        {
-
-                            # Should get UNIX epoch with no_offset flag,
-                            # since MT::Touch uses gmtime always.
-                            $touched
-                                = MT::Util::ts2epoch( undef, $touched, 1 );
-                            if ( $touched > $app->{fcgi_startup_time} ) {
-                                last;
-                            }
-                        }
-                    }
-
-                    # force closing of connection here
-                    $CGI::Fast::Ext_Request->Finish();
-                }
-                $CGI::Fast::Ext_Request->LastCall();
-
-                # closing FastCGI's listening socket, so the server won't
-                # open new connections to us
-                require POSIX;
-                POSIX::close(0);
-                $CGI::Fast::Ext_Request->Finish();
-            }
-            else {
-                $app = $class->new(%param) or die $class->errstr;
-                local $SIG{__WARN__} = sub { $app->trace( $_[0] ) };
-                $app->run;
-            }
         };
         if ( my $err = $@ ) {
             if ( !$app && $err =~ m/Missing configuration file/ ) {

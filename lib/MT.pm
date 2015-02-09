@@ -170,67 +170,14 @@ sub run_app {
     my $pkg = shift;
     my ( $class, $param ) = @_;
 
-    # When running under FastCGI, the initial invocation of the
-    # script has a bare environment. We can use this to test
-    # for FastCGI.
-    my $not_fast_cgi = 0;
-    $not_fast_cgi ||= exists $ENV{$_}
-        for qw(HTTP_HOST GATEWAY_INTERFACE SCRIPT_FILENAME SCRIPT_URL);
-    my $fast_cgi
-        = defined $param->{FastCGI}
-        ? $param->{FastCGI}
-        : ( not $not_fast_cgi );
-    if ($fast_cgi) {
-        eval { require CGI::Fast; };
-        $fast_cgi = 0 if $@;
-    }
-
     # ready to run now... run inside an eval block so we can gracefully
     # die if something bad happens
     my $app;
     eval {
         eval "require $class; 1;" or die $@;
-        if ($fast_cgi) {
-            my ( $max_requests, $max_time, $cfg );
-            while ( my $cgi = new CGI::Fast ) {
-                $app = $class->new( %$param, CGIObject => $cgi )
-                    or die $class->errstr;
-
-                $app->{fcgi_startup_time} ||= time;
-                $app->{fcgi_request_count}
-                    = ( $app->{fcgi_request_count} || 0 ) + 1;
-
-                unless ($cfg) {
-                    $cfg          = $app->config;
-                    $max_requests = $cfg->FastCGIMaxRequests;
-                    $max_time     = $cfg->FastCGIMaxTime;
-                }
-
-                local $SIG{__WARN__} = sub { $app->trace( $_[0] ) };
-                $pkg->set_instance($app);
-                $app->init_request( CGIObject => $cgi );
-                $app->run;
-
-                # Check for timeout for this process
-                if ( $max_time
-                    && ( time - $app->{fcgi_startup_time} >= $max_time ) )
-                {
-                    last;
-                }
-
-                # Check for max executions for this process
-                if ( $max_requests
-                    && ( $app->{fcgi_request_count} >= $max_requests ) )
-                {
-                    last;
-                }
-            }
-        }
-        else {
-            $app = $class->new(%$param) or die $class->errstr;
-            local $SIG{__WARN__} = sub { $app->trace( $_[0] ) };
-            $app->run;
-        }
+        $app = $class->new(%$param) or die $class->errstr;
+        local $SIG{__WARN__} = sub { $app->trace( $_[0] ) };
+        $app->run;
     };
     if ( my $err = $@ ) {
         my $charset = 'utf-8';
@@ -1018,9 +965,6 @@ sub init_config {
                 . $drh->{Version} . "\n";
             if ( $ENV{MOD_PERL} ) {
                 print $PERFLOG "# App Mode: mod_perl\n";
-            }
-            elsif ( $ENV{FAST_CGI} ) {
-                print $PERFLOG "# App Mode: FastCGI\n";
             }
             else {
                 print $PERFLOG "# App Mode: CGI\n";
