@@ -40,3 +40,6 @@ themes/eiger
 
 t/site/
 t/db/mt.db
+
+entry.tpl
+alt-tmpl/cms
