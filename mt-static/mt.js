@@ -1854,6 +1854,9 @@ MT.App = new Class( App, {
         if ( defined( this.autoSaveTimer ) )
             return this.autoSaveTimer.reset();
               if ( ! this.form || !this.form.submitted ) {
+             /* conflictしたので、下が正しいかもしれない。よくわからない。
+        if ( ! form || !form.submitted ) {
+             */
             this.autoSaveTimer = new Timer( this.getIndirectMethod( "autoSave" ), autoSaveDelay, 1 );
         }
     },
