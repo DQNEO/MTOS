@@ -1,2 +1,2 @@
 #!/bin/bash
-starman mt.psgi
+starman
