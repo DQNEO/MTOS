@@ -92,14 +92,11 @@ sub import {
                 . __FILE__
                 . "\nrequire $class; 1;"
                 or die $@;
-            if ($fast_cgi) {
 
-            }
-            else {
-                $app = $class->new(%param) or die $class->errstr;
-                local $SIG{__WARN__} = sub { $app->trace( $_[0] ) };
-                $app->run;
-            }
+            $app = $class->new(%param) or die $class->errstr;
+            local $SIG{__WARN__} = sub { $app->trace( $_[0] ) };
+            $app->run;
+
         };
         if ( my $err = $@ ) {
             if ( !$app && $err =~ m/Missing configuration file/ ) {
