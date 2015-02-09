@@ -170,20 +170,14 @@ sub run_app {
     my $pkg = shift;
     my ( $class, $param ) = @_;
 
-    my $fast_cgi = 0;
-
     # ready to run now... run inside an eval block so we can gracefully
     # die if something bad happens
     my $app;
     eval {
         eval "require $class; 1;" or die $@;
-        if ($fast_cgi) {
-        }
-        else {
-            $app = $class->new(%$param) or die $class->errstr;
-            local $SIG{__WARN__} = sub { $app->trace( $_[0] ) };
-            $app->run;
-        }
+        $app = $class->new(%$param) or die $class->errstr;
+        local $SIG{__WARN__} = sub { $app->trace( $_[0] ) };
+        $app->run;
     };
     if ( my $err = $@ ) {
         my $charset = 'utf-8';
