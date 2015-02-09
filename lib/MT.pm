@@ -170,12 +170,6 @@ sub run_app {
     my $pkg = shift;
     my ( $class, $param ) = @_;
 
-    # When running under FastCGI, the initial invocation of the
-    # script has a bare environment. We can use this to test
-    # for FastCGI.
-    my $not_fast_cgi = 0;
-    $not_fast_cgi ||= exists $ENV{$_}
-        for qw(HTTP_HOST GATEWAY_INTERFACE SCRIPT_FILENAME SCRIPT_URL);
     my $fast_cgi = 0;
 
     # ready to run now... run inside an eval block so we can gracefully
@@ -184,40 +178,6 @@ sub run_app {
     eval {
         eval "require $class; 1;" or die $@;
         if ($fast_cgi) {
-            my ( $max_requests, $max_time, $cfg );
-            while ( my $cgi = new CGI::Fast ) {
-                $app = $class->new( %$param, CGIObject => $cgi )
-                    or die $class->errstr;
-
-                $app->{fcgi_startup_time} ||= time;
-                $app->{fcgi_request_count}
-                    = ( $app->{fcgi_request_count} || 0 ) + 1;
-
-                unless ($cfg) {
-                    $cfg          = $app->config;
-                    $max_requests = $cfg->FastCGIMaxRequests;
-                    $max_time     = $cfg->FastCGIMaxTime;
-                }
-
-                local $SIG{__WARN__} = sub { $app->trace( $_[0] ) };
-                $pkg->set_instance($app);
-                $app->init_request( CGIObject => $cgi );
-                $app->run;
-
-                # Check for timeout for this process
-                if ( $max_time
-                    && ( time - $app->{fcgi_startup_time} >= $max_time ) )
-                {
-                    last;
-                }
-
-                # Check for max executions for this process
-                if ( $max_requests
-                    && ( $app->{fcgi_request_count} >= $max_requests ) )
-                {
-                    last;
-                }
-            }
         }
         else {
             $app = $class->new(%$param) or die $class->errstr;
