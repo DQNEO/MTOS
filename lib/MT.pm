@@ -966,9 +966,6 @@ sub init_config {
             if ( $ENV{MOD_PERL} ) {
                 print $PERFLOG "# App Mode: mod_perl\n";
             }
-            elsif ( $ENV{FAST_CGI} ) {
-                print $PERFLOG "# App Mode: FastCGI\n";
-            }
             else {
                 print $PERFLOG "# App Mode: CGI\n";
             }

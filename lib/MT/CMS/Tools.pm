@@ -44,7 +44,6 @@ sub system_check {
     }
 
     $param{server_modperl} = 1 if $ENV{MOD_PERL};
-    $param{server_fastcgi} = 1 if $ENV{FAST_CGI};
 
     $param{server_psgi} = $ENV{'psgi.version'} ? 1 : 0;
     $param{syscheck_html} = get_syscheck_content($app) || '';
