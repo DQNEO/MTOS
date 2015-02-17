@@ -104,7 +104,8 @@ my $obj = Component->new;
 $obj->prepare_app;
 
 return sub {
-    $obj->call(@_)
+    my $env = shift;
+    $obj->call($env)
 };
 
 sub new {
