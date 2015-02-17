@@ -100,6 +100,14 @@ my $mt_cgi = sub {
     };
 };
 
+# return PSGI app
+Component->new->to_app;
+
+sub new {
+    my $class = shift;
+    bless {} , $class;
+}
+
 sub run_cgi_with_buffering {
     my $env    = shift;
     my $script = shift;
@@ -330,8 +338,6 @@ sub call {
     my ( $self, $env ) = @_;
     $self->_app->($env);
 }
-
-my $app = Component->new->to_app();
 
 __END__
 
