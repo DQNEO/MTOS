@@ -12,6 +12,6 @@ use lib 'lib';
 require MT::Bootstrap;
 my $class = "MT::App::CMS";
 
-$app = $class->new(%param) or die $class->errstr;
+$app = $class->new() or die $class->errstr;
 local $SIG{__WARN__} = sub { $app->trace( $_[0] ) };
 $app->run;
