@@ -102,7 +102,10 @@ my $mt_cgi = sub {
 # return PSGI app
 my $obj = Component->new;
 $obj->prepare_app;
-$obj->to_app;
+
+return sub {
+    $obj->call(@_)
+};
 
 sub new {
     my $class = shift;
