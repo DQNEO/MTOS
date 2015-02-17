@@ -39,26 +39,6 @@ sub BEGIN {
         if $orig_dir && ( $orig_dir ne $dir );
 }
 
-my $fcgi_exit_requested   = 0;
-my $fcgi_handling_request = 0;
-
-sub fcgi_sig_handler {
-    my $sig = shift;
-    $fcgi_exit_requested = $sig;
-    if ($fcgi_handling_request) {
-
-       # With exit requested flag set, FastCGI loop will exit when it is done.
-        print STDERR
-            "Movable Type: SIG$sig caught. Exiting gracefully after current request.\n";
-    }
-    else {
-
-        # Not currently handling a request, so just go ahead and exit.
-        print STDERR "Movable Type: SIG$sig caught. Exiting gracefully.\n";
-        exit(1);
-    }
-}
-
 sub import {
     my ( $pkg, %param ) = @_;
 
