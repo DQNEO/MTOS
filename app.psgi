@@ -1,19 +1,9 @@
-# Movable Type (r) Open Source (C) 2001-2013 Six Apart, Ltd.
-# This program is distributed under the terms of the
-# GNU General Public License, version 2.
-#
-# $Id$
-
-package main;
+# extend Plac::Component
+package Component;
 use strict;
 use warnings;
 use lib 'lib';
 use lib 'extlib';
-
-package MT::PSGI;
-
-use strict;
-use warnings;
 use parent qw(Plack::Component);
 use Plack::Util::Accessor qw(script application url _app);
 use MT;
@@ -341,11 +331,7 @@ sub call {
     $self->_app->($env);
 }
 
-
-1;
-
-package main;
-my $app = MT::PSGI->new()->to_app();
+my $app = Component->new->to_app();
 
 __END__
 
