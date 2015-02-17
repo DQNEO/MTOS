@@ -100,24 +100,17 @@ my $mt_cgi = sub {
 };
 
 # return PSGI app
-my $obj = Component->new;
-$obj->prepare_app;
-
 return sub {
     my $env = shift;
-    $obj->call($env)
+
+    my $obj = Component->new;
+    $obj->prepare_app;
+    $obj->_app->($env);
 };
 
 sub new {
     my $class = shift;
     bless {} , $class;
-}
-
-sub to_app {
-    my $self = shift;
-    return sub {
-        $self->call(@_)
-    };
 }
 
 sub run_cgi_with_buffering {
@@ -344,11 +337,6 @@ sub apply_plack_middlewares {
     }
 
     return $builder->to_app($app);
-}
-
-sub call {
-    my ( $self, $env ) = @_;
-    $self->_app->($env);
 }
 
 __END__
