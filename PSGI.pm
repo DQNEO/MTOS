@@ -4,6 +4,12 @@
 #
 # $Id$
 
+package main;
+use strict;
+use warnings;
+use lib 'lib';
+use lib 'extlib';
+
 package MT::PSGI;
 
 use strict;
@@ -335,7 +341,11 @@ sub call {
     $self->_app->($env);
 }
 
+
 1;
+
+package main;
+my $app = MT::PSGI->new()->to_app();
 
 __END__
 
