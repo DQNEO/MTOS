@@ -102,11 +102,17 @@ my $mt_cgi = sub {
 
 # return PSGI app
 my $obj = Component->new;
+$obj->prepare_app;
 $obj->to_app;
 
 sub new {
     my $class = shift;
     bless {} , $class;
+}
+
+sub to_app {
+    my $self = shift;
+    return sub { $self->call(@_) };
 }
 
 sub run_cgi_with_buffering {
