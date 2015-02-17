@@ -111,7 +111,9 @@ sub new {
 
 sub to_app {
     my $self = shift;
-    return sub { $self->call(@_) };
+    return sub {
+        $self->call(@_)
+    };
 }
 
 sub run_cgi_with_buffering {
