@@ -82,26 +82,6 @@ my $mt_app = sub {
     };
 };
 
-## Run apps as non persistence cgi
-my $mt_cgi = sub {
-    my $script = shift;
-    return sub {
-        my $env = shift;
-        if ( $env->{'psgi.streaming'} ) {
-            DEBUG
-                && warn
-                "[$$] Bootstrap CGI script in non-buffering mode: $script\n";
-            return run_cgi_without_buffering( $env, $script );
-        }
-        else {
-            DEBUG
-                && warn
-                "[$$] Bootstrap CGI script in buffering mode: $script\n";
-            return run_cgi_with_buffering( $env, $script );
-        }
-    };
-};
-
 # return PSGI app
 return sub {
     my $env = shift;
@@ -213,6 +193,29 @@ sub make_app {
 
     if ( $type eq 'run_once' ) {
         my $filepath = File::Spec->catfile( $FindBin::Bin, $script );
+
+        ## Run apps as non persistence cgi
+        my $mt_cgi = sub {
+            my $script = shift;
+            return sub {
+                my $env = shift;
+                if ( $env->{'psgi.streaming'} ) {
+                    DEBUG
+                        && warn
+                        "[$$] Bootstrap CGI script in non-buffering mode: $script\n";
+                    return run_cgi_without_buffering( $env, $script );
+                }
+                else {
+                    DEBUG
+                        && warn
+                        "[$$] Bootstrap CGI script in buffering mode: $script\n";
+                    return run_cgi_with_buffering( $env, $script );
+                }
+            };
+        };
+
+
+
         $psgi_app = $mt_cgi->($filepath);
     }
     elsif ( $type eq 'xmlrpc' ) {
