@@ -107,7 +107,7 @@ return sub {
     my $env = shift;
 
     my $self = __PACKAGE__->new;
-    my $app = $self->mount_applications( $self->application_list );
+    my $app = $self->mount_applications( application_list() );
     $app->($env);
 };
 
