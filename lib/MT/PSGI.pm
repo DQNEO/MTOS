@@ -234,8 +234,9 @@ sub make_app {
 sub to_app {
     my $self = shift;
 
-    my @applications = $self->application_list();
     my $urlmap         = Plack::App::URLMap->new;
+    my @applications = $self->application_list();
+
     for my $app_id (@applications) {
         my $app = MT->registry( applications => $app_id ) unless ref $app_id;
         Carp::croak('No application is specified') unless $app;
