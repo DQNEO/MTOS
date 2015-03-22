@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use lib 'lib';
 use lib 'extlib';
-use Plack::Util::Accessor qw(url);
+use Plack::Util::Accessor qw(urlmap);
 use MT;
 use MT::Component;
 use Carp;
@@ -257,31 +257,31 @@ sub to_app {
         my $url      = $base . '/' . $script;
         my $psgi_app = $self->make_app($app);
         $psgi_app = $self->apply_plack_middlewares( $app_id, $psgi_app );
-        $self->{urlmap}->map( $url, $psgi_app );
+        $self->urlmap->map( $url, $psgi_app );
     }
 
     ## Mount mt-static directory
     my $staticurl = $mt->static_path();
     $staticurl =~ s!^https?://[^/]*!!;
     my $staticpath = $mt->static_file_path();
-    $self->{urlmap}->map( $staticurl,
+    $self->urlmap->map( $staticurl,
         Plack::App::Directory->new( { root => $staticpath } )->to_app );
 
     ## Mount support directory
     my $supporturl = MT->config->SupportURL;
     $supporturl =~ s!^https?://[^/]*!!;
     my $supportpath = MT->config->SupportDirectoryPath;
-    $self->{urlmap}->map( $supporturl,
+    $self->urlmap->map( $supporturl,
         Plack::App::Directory->new( { root => $supportpath } )->to_app );
 
     ## Mount favicon.ico
     my $static = $staticpath;
     $static .= '/' unless $static =~ m!/$!;
     my $favicon = $static . 'images/favicon.ico';
-    $self->{urlmap}->map(
+    $self->urlmap->map(
         '/favicon.ico' => Plack::App::File->new( { file => $favicon } )->to_app );
 
-    return $self->{urlmap}->to_app;
+    return $self->urlmap->to_app;
 }
 
 sub apply_plack_middlewares {
