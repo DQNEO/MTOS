@@ -193,10 +193,7 @@ sub run_cgi_without_buffering {
 
 sub prepare_app {
     my $self = shift;
-    my $app;
-
-    $app = $self->mount_applications( $self->application_list );
-
+    my $app = $self->mount_applications( $self->application_list );
     return $self->_app($app);
 }
 
