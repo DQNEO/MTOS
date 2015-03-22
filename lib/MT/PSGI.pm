@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use lib 'lib';
 use lib 'extlib';
-use Plack::Util::Accessor qw(url _app);
+use Plack::Util::Accessor qw(url);
 use MT;
 use MT::Component;
 use Carp;
@@ -107,8 +107,8 @@ return sub {
     my $env = shift;
 
     my $self = __PACKAGE__->new;
-    my $app = $self->mount_applications( application_list() );
-    $app->($env);
+    my $urlmap = $self->mount_applications( application_list() );
+    $urlmap->to_app->($env);
 };
 
 sub new {
@@ -281,7 +281,7 @@ sub mount_applications {
     $urlmap->map(
         '/favicon.ico' => Plack::App::File->new( { file => $favicon } )->to_app );
 
-    $self->_app( $urlmap->to_app );
+    return $urlmap;
 }
 
 sub apply_plack_middlewares {
