@@ -231,7 +231,6 @@ sub make_app {
         my $handler = $app->{handler};
         $psgi_app = $mt_app->($handler);
     }
-    $self->_app($psgi_app);
 }
 
 sub mount_applications {
