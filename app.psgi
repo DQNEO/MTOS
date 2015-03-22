@@ -106,7 +106,7 @@ my $mt_cgi = sub {
 return sub {
     my $env = shift;
 
-    my $obj = Component->new;
+    my $obj = __PACKAGE__->new;
     $obj->prepare_app;
     $obj->_app->($env);
 };
