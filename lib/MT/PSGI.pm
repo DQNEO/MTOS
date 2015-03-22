@@ -1,5 +1,5 @@
 # extend Plac::Component
-package PSGI;
+package MT::PSGI;
 use strict;
 use warnings;
 use lib 'lib';
