@@ -82,18 +82,16 @@ my $mt_app = sub {
     };
 };
 
-# return PSGI app
-return sub {
-    my $env = shift;
-
-    my $self = __PACKAGE__->new;
-    my $urlmap = $self->create_urlmap( application_list() );
-    $urlmap->to_app->($env);
-};
 
 sub new {
     my $class = shift;
     bless {} , $class;
+}
+
+sub to_app {
+    my $self = shift;
+    my $urlmap = $self->create_urlmap( $self->application_list() );
+    return $urlmap->to_app;
 }
 
 sub run_cgi_with_buffering {
@@ -172,6 +170,7 @@ sub run_cgi_without_buffering {
 }
 
 sub application_list {
+    my $self = shift;
     my $reg  = MT::Component->registry('applications');
     my %apps = map {
         map { $_ => 1 }
