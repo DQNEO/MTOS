@@ -106,8 +106,9 @@ my $mt_cgi = sub {
 return sub {
     my $env = shift;
 
-    my $obj = __PACKAGE__->new;
-    $obj->prepare_app;
+    my $self = my $obj = __PACKAGE__->new;
+    my $app = $self->mount_applications( $self->application_list );
+    $self->_app($app);
     $obj->_app->($env);
 };
 
@@ -189,12 +190,6 @@ sub run_cgi_without_buffering {
         }
         $writer->close if $writer;
     };
-}
-
-sub prepare_app {
-    my $self = shift;
-    my $app = $self->mount_applications( $self->application_list );
-    return $self->_app($app);
 }
 
 sub application_list {
