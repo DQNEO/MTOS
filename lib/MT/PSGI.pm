@@ -85,7 +85,9 @@ my $mt_app = sub {
 
 sub new {
     my $class = shift;
-    bless {} , $class;
+    my $self = {};
+    $self->{urlmap}         = Plack::App::URLMap->new;
+    bless $self , $class;
 }
 
 sub run_cgi_with_buffering {
@@ -231,10 +233,39 @@ sub make_app {
     return $psgi_app;
 }
 
+sub _map_static_dir {
+    my $self = shift;
+
+    my $staticurl = $mt->static_path();
+    $staticurl =~ s!^https?://[^/]*!!;
+    my $staticpath = $mt->static_file_path();
+    $self->urlmap->map( $staticurl,
+        Plack::App::Directory->new( { root => $staticpath } )->to_app );
+}
+
+sub _map_support_dir {
+    my $self = shift;
+
+    my $supporturl = MT->config->SupportURL;
+    $supporturl =~ s!^https?://[^/]*!!;
+    my $supportpath = MT->config->SupportDirectoryPath;
+    $self->urlmap->map( $supporturl,
+        Plack::App::Directory->new( { root => $supportpath } )->to_app );
+}
+
+sub _map_favicon_ico {
+    my $self = shift;
+    my $static = $mt->static_file_path();
+    $static .= '/' unless $static =~ m!/$!;
+    my $favicon = $static . 'images/favicon.ico';
+    $self->urlmap->map(
+        '/favicon.ico' => Plack::App::File->new( { file => $favicon } )->to_app );
+
+}
+
 sub to_app {
     my $self = shift;
 
-    $self->{urlmap}         = Plack::App::URLMap->new;
     my @applications = $self->application_list();
 
     for my $app_id (@applications) {
@@ -260,26 +291,9 @@ sub to_app {
         $self->urlmap->map( $url, $psgi_app );
     }
 
-    ## Mount mt-static directory
-    my $staticurl = $mt->static_path();
-    $staticurl =~ s!^https?://[^/]*!!;
-    my $staticpath = $mt->static_file_path();
-    $self->urlmap->map( $staticurl,
-        Plack::App::Directory->new( { root => $staticpath } )->to_app );
-
-    ## Mount support directory
-    my $supporturl = MT->config->SupportURL;
-    $supporturl =~ s!^https?://[^/]*!!;
-    my $supportpath = MT->config->SupportDirectoryPath;
-    $self->urlmap->map( $supporturl,
-        Plack::App::Directory->new( { root => $supportpath } )->to_app );
-
-    ## Mount favicon.ico
-    my $static = $staticpath;
-    $static .= '/' unless $static =~ m!/$!;
-    my $favicon = $static . 'images/favicon.ico';
-    $self->urlmap->map(
-        '/favicon.ico' => Plack::App::File->new( { file => $favicon } )->to_app );
+    $self->_map_static_dir;
+    $self->_map_support_dir;
+    $self->_map_favicon_ico;
 
     return $self->urlmap->to_app;
 }
