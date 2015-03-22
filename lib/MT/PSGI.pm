@@ -28,7 +28,7 @@ $Data::Dumper::Deparse = 1;
 use constant DEBUG => $ENV{MT_PSGI_DEBUG} || 0;
 our $mt = MT->new();
 
-my $mt_app = sub {
+sub _mt_app {
     my $app_class = shift;
     return sub {
         my $env = shift;
@@ -227,7 +227,7 @@ sub make_app {
     }
     else {
         my $handler = $app->{handler};
-        $psgi_app = $mt_app->($handler);
+        $psgi_app = _mt_app($handler);
     }
 
     return $psgi_app;
