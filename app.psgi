@@ -22,6 +22,9 @@ use IO::Select;
 use Symbol qw( gensym );
 use XMLRPC::Transport::HTTP::Plack;
 
+use Data::Dumper;
+$Data::Dumper::Deparse = 1;
+
 use constant DEBUG => $ENV{MT_PSGI_DEBUG} || 0;
 our $mt = MT->new();
 
