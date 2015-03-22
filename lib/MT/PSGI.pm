@@ -106,10 +106,9 @@ my $mt_cgi = sub {
 return sub {
     my $env = shift;
 
-    my $self = my $obj = __PACKAGE__->new;
+    my $self = __PACKAGE__->new;
     my $app = $self->mount_applications( $self->application_list );
-    $self->_app($app);
-    $obj->_app->($env);
+    $app->($env);
 };
 
 sub new {
