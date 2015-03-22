@@ -231,6 +231,8 @@ sub make_app {
         my $handler = $app->{handler};
         $psgi_app = $mt_app->($handler);
     }
+
+    return $psgi_app;
 }
 
 sub create_urlmap {
