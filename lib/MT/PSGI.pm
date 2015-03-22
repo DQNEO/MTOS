@@ -88,12 +88,6 @@ sub new {
     bless {} , $class;
 }
 
-sub to_app {
-    my $self = shift;
-    my $urlmap = $self->create_urlmap( $self->application_list() );
-    return $urlmap->to_app;
-}
-
 sub run_cgi_with_buffering {
     my $env    = shift;
     my $script = shift;
@@ -237,9 +231,10 @@ sub make_app {
     return $psgi_app;
 }
 
-sub create_urlmap {
-    my $self           = shift;
-    my (@applications) = @_;
+sub to_app {
+    my $self = shift;
+
+    my @applications = $self->application_list();
     my $urlmap         = Plack::App::URLMap->new;
     for my $app_id (@applications) {
         my $app = MT->registry( applications => $app_id ) unless ref $app_id;
@@ -285,7 +280,7 @@ sub create_urlmap {
     $urlmap->map(
         '/favicon.ico' => Plack::App::File->new( { file => $favicon } )->to_app );
 
-    return $urlmap;
+    return $urlmap->to_app;
 }
 
 sub apply_plack_middlewares {
