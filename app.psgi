@@ -1,5 +1,5 @@
 # extend Plac::Component
-package Component;
+package PSGI;
 use strict;
 use warnings;
 use lib 'lib';
