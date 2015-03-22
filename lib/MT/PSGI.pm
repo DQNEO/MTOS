@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use lib 'lib';
 use lib 'extlib';
-use Plack::Util::Accessor qw(application url _app);
+use Plack::Util::Accessor qw(url _app);
 use MT;
 use MT::Component;
 use Carp;
@@ -194,12 +194,8 @@ sub run_cgi_without_buffering {
 sub prepare_app {
     my $self = shift;
     my $app;
-    if ( $self->application ) {
-        $app = $self->make_app( $self->application );
-    }
-    else {
-        $app = $self->mount_applications( $self->application_list );
-    }
+
+    $app = $self->mount_applications( $self->application_list );
 
     return $self->_app($app);
 }
