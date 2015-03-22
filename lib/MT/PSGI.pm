@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use lib 'lib';
 use lib 'extlib';
-use Plack::Util::Accessor qw(script application url _app);
+use Plack::Util::Accessor qw(application url _app);
 use MT;
 use MT::Component;
 use Carp;
