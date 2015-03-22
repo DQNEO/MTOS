@@ -28,7 +28,17 @@ $Data::Dumper::Deparse = 1;
 use constant DEBUG => $ENV{MT_PSGI_DEBUG} || 0;
 our $mt = MT->new();
 
+
+sub new {
+    my $class = shift;
+    my $self = {};
+    $self->{urlmap}         = Plack::App::URLMap->new;
+    bless $self , $class;
+}
+
+
 sub _mt_app {
+    shift;
     my $app_class = shift;
     return sub {
         my $env = shift;
@@ -80,14 +90,6 @@ sub _mt_app {
             = $app->{query}->psgi_header( %{ $app->{cgi_headers} } );
         return [ $status, $headers, [$body] ];
     };
-};
-
-
-sub new {
-    my $class = shift;
-    my $self = {};
-    $self->{urlmap}         = Plack::App::URLMap->new;
-    bless $self , $class;
 }
 
 sub run_cgi_with_buffering {
@@ -227,7 +229,7 @@ sub make_app {
     }
     else {
         my $handler = $app->{handler};
-        $psgi_app = _mt_app($handler);
+        $psgi_app = $self->_mt_app($handler);
     }
 
     return $psgi_app;
