@@ -107,7 +107,7 @@ return sub {
     my $env = shift;
 
     my $self = __PACKAGE__->new;
-    my $urlmap = $self->mount_applications( application_list() );
+    my $urlmap = $self->create_urlmap( application_list() );
     $urlmap->to_app->($env);
 };
 
@@ -233,7 +233,7 @@ sub make_app {
     }
 }
 
-sub mount_applications {
+sub create_urlmap {
     my $self           = shift;
     my (@applications) = @_;
     my $urlmap         = Plack::App::URLMap->new;
