@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use lib 'lib';
 use lib 'extlib';
-use Plack::Util::Accessor qw(script application url _app);
+use Plack::Util::Accessor qw(urlmap);
 use MT;
 use MT::Component;
 use Carp;
@@ -28,7 +28,7 @@ $Data::Dumper::Deparse = 1;
 use constant DEBUG => $ENV{MT_PSGI_DEBUG} || 0;
 our $mt = MT->new();
 
-my $mt_app = sub {
+sub _mt_app {
     my $app_class = shift;
     return sub {
         my $env = shift;
@@ -82,38 +82,12 @@ my $mt_app = sub {
     };
 };
 
-## Run apps as non persistence cgi
-my $mt_cgi = sub {
-    my $script = shift;
-    return sub {
-        my $env = shift;
-        if ( $env->{'psgi.streaming'} ) {
-            DEBUG
-                && warn
-                "[$$] Bootstrap CGI script in non-buffering mode: $script\n";
-            return run_cgi_without_buffering( $env, $script );
-        }
-        else {
-            DEBUG
-                && warn
-                "[$$] Bootstrap CGI script in buffering mode: $script\n";
-            return run_cgi_with_buffering( $env, $script );
-        }
-    };
-};
-
-# return PSGI app
-return sub {
-    my $env = shift;
-
-    my $obj = __PACKAGE__->new;
-    $obj->prepare_app;
-    $obj->_app->($env);
-};
 
 sub new {
     my $class = shift;
-    bless {} , $class;
+    my $self = {};
+    $self->{urlmap}         = Plack::App::URLMap->new;
+    bless $self , $class;
 }
 
 sub run_cgi_with_buffering {
@@ -191,20 +165,8 @@ sub run_cgi_without_buffering {
     };
 }
 
-sub prepare_app {
-    my $self = shift;
-    my $app;
-    if ( $self->application ) {
-        $app = $self->make_app( $self->application );
-    }
-    else {
-        $app = $self->mount_applications( $self->application_list );
-    }
-
-    return $self->_app($app);
-}
-
 sub application_list {
+    my $self = shift;
     my $reg  = MT::Component->registry('applications');
     my %apps = map {
         map { $_ => 1 }
@@ -226,6 +188,29 @@ sub make_app {
 
     if ( $type eq 'run_once' ) {
         my $filepath = File::Spec->catfile( $FindBin::Bin, $script );
+
+        ## Run apps as non persistence cgi
+        my $mt_cgi = sub {
+            my $script = shift;
+            return sub {
+                my $env = shift;
+                if ( $env->{'psgi.streaming'} ) {
+                    DEBUG
+                        && warn
+                        "[$$] Bootstrap CGI script in non-buffering mode: $script\n";
+                    return run_cgi_without_buffering( $env, $script );
+                }
+                else {
+                    DEBUG
+                        && warn
+                        "[$$] Bootstrap CGI script in buffering mode: $script\n";
+                    return run_cgi_with_buffering( $env, $script );
+                }
+            };
+        };
+
+
+
         $psgi_app = $mt_cgi->($filepath);
     }
     elsif ( $type eq 'xmlrpc' ) {
@@ -242,15 +227,47 @@ sub make_app {
     }
     else {
         my $handler = $app->{handler};
-        $psgi_app = $mt_app->($handler);
+        $psgi_app = _mt_app($handler);
     }
-    $self->_app($psgi_app);
+
+    return $psgi_app;
 }
 
-sub mount_applications {
-    my $self           = shift;
-    my (@applications) = @_;
-    my $urlmap         = Plack::App::URLMap->new;
+sub _map_static_dir {
+    my $self = shift;
+
+    my $staticurl = $mt->static_path();
+    $staticurl =~ s!^https?://[^/]*!!;
+    my $staticpath = $mt->static_file_path();
+    $self->urlmap->map( $staticurl,
+        Plack::App::Directory->new( { root => $staticpath } )->to_app );
+}
+
+sub _map_support_dir {
+    my $self = shift;
+
+    my $supporturl = MT->config->SupportURL;
+    $supporturl =~ s!^https?://[^/]*!!;
+    my $supportpath = MT->config->SupportDirectoryPath;
+    $self->urlmap->map( $supporturl,
+        Plack::App::Directory->new( { root => $supportpath } )->to_app );
+}
+
+sub _map_favicon_ico {
+    my $self = shift;
+    my $static = $mt->static_file_path();
+    $static .= '/' unless $static =~ m!/$!;
+    my $favicon = $static . 'images/favicon.ico';
+    $self->urlmap->map(
+        '/favicon.ico' => Plack::App::File->new( { file => $favicon } )->to_app );
+
+}
+
+sub to_app {
+    my $self = shift;
+
+    my @applications = $self->application_list();
+
     for my $app_id (@applications) {
         my $app = MT->registry( applications => $app_id ) unless ref $app_id;
         Carp::croak('No application is specified') unless $app;
@@ -271,31 +288,14 @@ sub mount_applications {
         my $url      = $base . '/' . $script;
         my $psgi_app = $self->make_app($app);
         $psgi_app = $self->apply_plack_middlewares( $app_id, $psgi_app );
-        $urlmap->map( $url, $psgi_app );
+        $self->urlmap->map( $url, $psgi_app );
     }
 
-    ## Mount mt-static directory
-    my $staticurl = $mt->static_path();
-    $staticurl =~ s!^https?://[^/]*!!;
-    my $staticpath = $mt->static_file_path();
-    $urlmap->map( $staticurl,
-        Plack::App::Directory->new( { root => $staticpath } )->to_app );
+    $self->_map_static_dir;
+    $self->_map_support_dir;
+    $self->_map_favicon_ico;
 
-    ## Mount support directory
-    my $supporturl = MT->config->SupportURL;
-    $supporturl =~ s!^https?://[^/]*!!;
-    my $supportpath = MT->config->SupportDirectoryPath;
-    $urlmap->map( $supporturl,
-        Plack::App::Directory->new( { root => $supportpath } )->to_app );
-
-    ## Mount favicon.ico
-    my $static = $staticpath;
-    $static .= '/' unless $static =~ m!/$!;
-    my $favicon = $static . 'images/favicon.ico';
-    $urlmap->map(
-        '/favicon.ico' => Plack::App::File->new( { file => $favicon } )->to_app );
-
-    $self->_app( $urlmap->to_app );
+    return $self->urlmap->to_app;
 }
 
 sub apply_plack_middlewares {
