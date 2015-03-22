@@ -8,4 +8,10 @@
 
 use strict;
 use lib 'lib';
-use MT::Bootstrap App => 'MT::App::CMS';
+
+require MT::Bootstrap;
+my $class = "MT::App::CMS";
+
+$app = $class->new() or die $class->errstr;
+local $SIG{__WARN__} = sub { $app->trace( $_[0] ) };
+$app->run;

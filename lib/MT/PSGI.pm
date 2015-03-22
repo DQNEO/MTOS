@@ -1,14 +1,9 @@
-# Movable Type (r) Open Source (C) 2001-2013 Six Apart, Ltd.
-# This program is distributed under the terms of the
-# GNU General Public License, version 2.
-#
-# $Id$
-
+# extend Plac::Component
 package MT::PSGI;
-
 use strict;
 use warnings;
-use parent qw(Plack::Component);
+use lib 'lib';
+use lib 'extlib';
 use Plack::Util::Accessor qw(script application url _app);
 use MT;
 use MT::Component;
@@ -26,6 +21,9 @@ use IPC::Open3;
 use IO::Select;
 use Symbol qw( gensym );
 use XMLRPC::Transport::HTTP::Plack;
+
+use Data::Dumper;
+$Data::Dumper::Deparse = 1;
 
 use constant DEBUG => $ENV{MT_PSGI_DEBUG} || 0;
 our $mt = MT->new();
@@ -103,6 +101,20 @@ my $mt_cgi = sub {
         }
     };
 };
+
+# return PSGI app
+return sub {
+    my $env = shift;
+
+    my $obj = __PACKAGE__->new;
+    $obj->prepare_app;
+    $obj->_app->($env);
+};
+
+sub new {
+    my $class = shift;
+    bless {} , $class;
+}
 
 sub run_cgi_with_buffering {
     my $env    = shift;
@@ -329,13 +341,6 @@ sub apply_plack_middlewares {
 
     return $builder->to_app($app);
 }
-
-sub call {
-    my ( $self, $env ) = @_;
-    $self->_app->($env);
-}
-
-1;
 
 __END__
 
