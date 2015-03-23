@@ -39,13 +39,13 @@ sub new {
 
 sub _handler_class_to_app {
     shift;
-    my $app_class = shift;
+    my $class = shift;
     my $psgi_app = sub {
         my $env = shift;
-        eval "require $app_class";
+        eval "require $class";
         my $cgi = CGI::PSGI->new($env);
         local *ENV = { %ENV, %$env };    # some MT::App method needs this
-        my $app = $app_class->new( CGIObject => $cgi );
+        my $app = $class->new( CGIObject => $cgi );
         delete $app->{init_request};
         MT->set_instance($app);
 
