@@ -37,7 +37,7 @@ sub new {
 }
 
 
-sub _mt_app {
+sub _handler_class_to_app {
     shift;
     my $app_class = shift;
     my $psgi_app = sub {
@@ -190,7 +190,7 @@ sub make_app {
     my $type = $app->{type} || '';
 
     if ($type ne 'run_once' && $type ne 'xmlrpc') {
-        return $self->_mt_app($app->{handler});
+        return $self->_handler_class_to_app($app->{handler});
     }
 
     my $psgi_app;
