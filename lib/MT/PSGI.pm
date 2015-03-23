@@ -186,6 +186,11 @@ sub make_app {
     $script = MT->handler_to_coderef($script) unless ref $script;
     $script = $script->();
     my $type = $app->{type} || '';
+
+    if ($type ne 'run_once' && $type ne 'xmlrpc') {
+        return $self->_mt_app($app->{handler});
+    }
+
     my $psgi_app;
 
     if ( $type eq 'run_once' ) {
@@ -226,10 +231,6 @@ sub make_app {
             my $req = Plack::Request->new($env);
             $server->handle($req);
         };
-    }
-    else {
-        my $handler = $app->{handler};
-        $psgi_app = $self->_mt_app($handler);
     }
 
     return $psgi_app;
