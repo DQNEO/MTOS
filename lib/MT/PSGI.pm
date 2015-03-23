@@ -40,7 +40,7 @@ sub new {
 sub _mt_app {
     shift;
     my $app_class = shift;
-    return sub {
+    my $psgi_app = sub {
         my $env = shift;
         eval "require $app_class";
         my $cgi = CGI::PSGI->new($env);
@@ -90,6 +90,8 @@ sub _mt_app {
             = $app->{query}->psgi_header( %{ $app->{cgi_headers} } );
         return [ $status, $headers, [$body] ];
     };
+
+    return $psgi_app;
 }
 
 sub run_cgi_with_buffering {
