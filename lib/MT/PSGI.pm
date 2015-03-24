@@ -36,16 +36,16 @@ sub new {
     bless $self , $class;
 }
 
-
-sub _mt_app {
+# this is the main routine
+sub _handler_class_to_app {
     shift;
-    my $app_class = shift;
-    return sub {
+    my $class = shift;
+    my $psgi_app = sub {
         my $env = shift;
-        eval "require $app_class";
+        eval "require $class";
         my $cgi = CGI::PSGI->new($env);
         local *ENV = { %ENV, %$env };    # some MT::App method needs this
-        my $app = $app_class->new( CGIObject => $cgi );
+        my $app = $class->new( CGIObject => $cgi );
         delete $app->{init_request};
         MT->set_instance($app);
 
@@ -90,6 +90,8 @@ sub _mt_app {
             = $app->{query}->psgi_header( %{ $app->{cgi_headers} } );
         return [ $status, $headers, [$body] ];
     };
+
+    return $psgi_app;
 }
 
 sub run_cgi_with_buffering {
@@ -186,6 +188,11 @@ sub make_app {
     $script = MT->handler_to_coderef($script) unless ref $script;
     $script = $script->();
     my $type = $app->{type} || '';
+
+    if ($type ne 'run_once' && $type ne 'xmlrpc') {
+        return $self->_handler_class_to_app($app->{handler});
+    }
+
     my $psgi_app;
 
     if ( $type eq 'run_once' ) {
@@ -226,10 +233,6 @@ sub make_app {
             my $req = Plack::Request->new($env);
             $server->handle($req);
         };
-    }
-    else {
-        my $handler = $app->{handler};
-        $psgi_app = $self->_mt_app($handler);
     }
 
     return $psgi_app;
