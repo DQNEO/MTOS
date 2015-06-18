@@ -4393,7 +4393,7 @@ sub preview_object_basename {
     push @parts, $q->param('_type');
     push @parts, $app->config->SecretToken;
     my $data = join ",", @parts;
-    return 'mt-preview-' . perl_sha1_digest_hex($data);
+    return 'mt-preview';
 }
 
 sub object_edit_uri {
