@@ -89,9 +89,9 @@ sub init_request {
         $app->delete_param('test') if $app->param('test');
     }
 
-    # If mt-check.cgi exists, redirect to errro screen
+    # If mt-config.cgi exists, redirect to error screen
     my $cfg_exists = $app->is_config_exists();
-    if ( $cfg_exists && lc $step ne 'seed' && lc $mode ne 'retry' ) {
+    if ( $cfg_exists && lc $step ne 'seed' ) {
         my %param;
         $param{cfg_exists} = 1;
         $app->mode('pre_start');
@@ -252,7 +252,8 @@ sub init_core_registry {
                     'This module is needed if you would like to be able to use NetPBM as the image driver for MT.',
             },
             'Storable' => {
-                link => 'http://search.cpan.org/dist/Storable',
+                
+link => 'http://search.cpan.org/dist/Storable',
                 label =>
                     'This module is required by certain MT plugins available from third parties.',
             },
@@ -1251,7 +1252,11 @@ sub unserialize_config {
     if ($data) {
         $data = pack 'H*', $data;
         require MT::Serialize;
-        my $ser    = MT::Serialize->new('MT');
+        my $ser     = MT::Serialize->new('MT');
+        my $ser_ver = $ser->serializer_version($data);
+        if ( !$ser_ver || $ser_ver != $MT::Serialize::SERIALIZER_VERSION ) {
+            die $app->translate('Invalid parameter.');
+        }
         my $thawed = $ser->unserialize($data);
         if ($thawed) {
             my $saved_cfg = $$thawed;

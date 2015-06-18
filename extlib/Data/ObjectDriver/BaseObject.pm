@@ -634,6 +634,7 @@ sub AUTOLOAD {
 
     {
         no strict 'refs'; ## no critic
+        no warnings 'redefine';
         *$AUTOLOAD = $obj->column_func($col);
     }
 
