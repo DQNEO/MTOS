@@ -268,6 +268,14 @@ sub _map_favicon_ico {
 
 }
 
+sub _map_for_localpreview {
+    my $self = shift;
+    $self->urlmap->map('/styles.css' => Plack::App::File->new( { file => 'styles.css' } )->to_app );
+    $self->urlmap->map('/dqneo.css' => Plack::App::File->new( { file => 'dqneo.css' } )->to_app );
+    $self->urlmap->map('/2015/', Plack::App::Directory->new( { root => '2015' } )->to_app );
+    $self->urlmap->map('/icons/', Plack::App::Directory->new( { root => 'icons' } )->to_app );
+}
+
 sub to_app {
     my $self = shift;
 
@@ -301,10 +309,7 @@ sub to_app {
     $self->_map_favicon_ico;
 
     # map for local preview
-    $self->urlmap->map('/styles.css' => Plack::App::File->new( { file => 'styles.css' } )->to_app );
-    $self->urlmap->map('/dqneo.css' => Plack::App::File->new( { file => 'dqneo.css' } )->to_app );
-    $self->urlmap->map('/2015/', Plack::App::Directory->new( { root => '2015' } )->to_app );
-    $self->urlmap->map('/icons/', Plack::App::Directory->new( { root => 'icons' } )->to_app );
+    $self->_map_for_localpreview;
 
     return $self->urlmap->to_app;
 }
