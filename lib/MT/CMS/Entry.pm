@@ -1110,7 +1110,7 @@ sub _create_temp_entry {
 }
 
 sub _build_entry_preview {
-    my $app = shift;
+    my $app = shift; # MT::App::CMS.pm
     my ( $entry, %param ) = @_;
     my $q           = $app->param;
     my $type        = $q->param('_type') || 'entry';
